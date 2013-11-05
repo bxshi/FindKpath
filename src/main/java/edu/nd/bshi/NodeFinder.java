@@ -12,12 +12,12 @@ public class NodeFinder {
      * @param dbInstance Singleton DatabaseInstance.
      *
      */
-    public NodeFinder(GraphDataBase dbInstance) {
-        graphDb = dbInstance.getGraphDB();
+    public NodeFinder(GraphDatabaseService dbInstance) {
+        graphDb = dbInstance;
     }
 
     public NodeFinder() {
-        this(GraphDataBase.getInstance());
+        this(GraphDataBase.getInstance().getGraphDB());
     }
 
     public String[] getAllNodeIndex(){
