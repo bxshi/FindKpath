@@ -4,14 +4,7 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.index.Index;
 
-/**
- * Created with IntelliJ IDEA.
- * User: bshi
- * Date: 11/5/13
- * Time: 3:10 PM
- * To change this template use File | Settings | File Templates.
- */
-public class NodeFinder {
+class NodeFinder {
     private static GraphDatabaseService graphDb;
 
     /**
