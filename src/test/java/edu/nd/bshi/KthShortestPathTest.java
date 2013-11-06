@@ -6,13 +6,6 @@ import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 
 import java.util.Iterator;
 
-/**
- * Created with IntelliJ IDEA.
- * User: bshi
- * Date: 11/5/13
- * Time: 9:58 PM
- * To change this template use File | Settings | File Templates.
- */
 public class KthShortestPathTest {
 
     static GraphDatabaseService graphDb;
