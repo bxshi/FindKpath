@@ -27,7 +27,6 @@ public class NodeFinder {
     public Node getSingleNodeByIndex(String indexName, String propertyName, Object value){
         Index<Node> nodeIndex = graphDb.index().forNodes(indexName);
         return nodeIndex.get(propertyName, value).getSingle();
-
     }
 
 }
