@@ -2,7 +2,6 @@ package edu.nd.bshi;
 
 import org.junit.*;
 
-import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
 
