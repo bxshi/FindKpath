@@ -5,26 +5,8 @@ import org.junit.*;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 
-public class NodeFinderTest {
-
-    static GraphDatabaseService graphDb;
-    static NodeFinder nodeFinder;
-    static final String TEST_DB_PATH = "./test_db";
-
-    @Before
-    public void setUp() throws Exception {
-        Util.clearUpDB(TEST_DB_PATH);
-        graphDb = new GraphDatabaseFactory().newEmbeddedDatabase(TEST_DB_PATH);
-        nodeFinder = new NodeFinder(graphDb);
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        graphDb.shutdown();
-        Util.clearUpDB(TEST_DB_PATH);
-    }
+public class NodeFinderTest extends ParentTestClass{
 
     @Test
     public void testGetAllNodeIndex() throws Exception {

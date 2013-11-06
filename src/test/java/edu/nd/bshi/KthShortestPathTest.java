@@ -2,29 +2,12 @@ package edu.nd.bshi;
 
 import org.junit.*;
 import org.neo4j.graphdb.*;
-import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 
 import java.util.Iterator;
 
-public class KthShortestPathTest {
+public class KthShortestPathTest extends ParentTestClass{
 
-    static GraphDatabaseService graphDb;
-    static NodeFinder nodeFinder;
-    static final String TEST_DB_PATH = "./test_db";
     static enum relType implements RelationshipType {TESTLINK}
-
-    @Before
-    public void setUp() throws Exception {
-        Util.clearUpDB(TEST_DB_PATH);
-        graphDb = new GraphDatabaseFactory().newEmbeddedDatabase(TEST_DB_PATH);
-        nodeFinder = new NodeFinder(graphDb);
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        graphDb.shutdown();
-        Util.clearUpDB(TEST_DB_PATH);
-    }
 
     @Test
     public void testGetAllKthShortestPath() throws Exception {
