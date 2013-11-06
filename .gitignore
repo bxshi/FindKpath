@@ -1,4 +1,5 @@
 .idea
 FindKpath.iml
 db
-.target
+target
+test_db
