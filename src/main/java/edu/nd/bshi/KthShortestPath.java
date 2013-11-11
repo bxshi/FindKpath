@@ -1,10 +1,10 @@
 package edu.nd.bshi;
 
+import org.neo4j.graphalgo.GraphAlgoFactory;
+import org.neo4j.graphalgo.PathFinder;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
-import org.neo4j.graphalgo.PathFinder;
-import org.neo4j.graphalgo.GraphAlgoFactory;
 import org.neo4j.kernel.Traversal;
 
 public class KthShortestPath {
@@ -14,9 +14,10 @@ public class KthShortestPath {
 
     /**
      * Return all the shortest paths between startNode and stopNode
-     * @param startNode Start point
-     * @param stopNode  Stop point
-     * @param maxDepth  Max depth, path which length exceeds this depth will be dropped
+     *
+     * @param startNode   Start point
+     * @param stopNode    Stop point
+     * @param maxDepth    Max depth, path which length exceeds this depth will be dropped
      * @param maxHitCount Max number of paths that will be returned
      * @return And iterable path list
      */

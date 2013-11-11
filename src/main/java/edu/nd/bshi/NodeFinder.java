@@ -8,9 +8,7 @@ public class NodeFinder {
     private static GraphDatabaseService graphDb;
 
     /**
-     *
      * @param dbInstance Singleton DatabaseInstance.
-     *
      */
     public NodeFinder(GraphDatabaseService dbInstance) {
         graphDb = dbInstance;
@@ -20,11 +18,11 @@ public class NodeFinder {
         this(GraphDataBase.getInstance().getGraphDB());
     }
 
-    public String[] getAllNodeIndex(){
+    public String[] getAllNodeIndex() {
         return graphDb.index().nodeIndexNames();
     }
 
-    public Node getSingleNodeByIndex(String indexName, String propertyName, Object value){
+    public Node getSingleNodeByIndex(String indexName, String propertyName, Object value) {
         Index<Node> nodeIndex = graphDb.index().forNodes(indexName);
         return nodeIndex.get(propertyName, value).getSingle();
     }

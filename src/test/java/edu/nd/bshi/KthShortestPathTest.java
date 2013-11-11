@@ -1,18 +1,19 @@
 package edu.nd.bshi;
 
-import org.junit.*;
-import org.neo4j.graphdb.*;
+import org.junit.Assert;
+import org.junit.Test;
+import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Path;
+import org.neo4j.graphdb.Transaction;
 
 import java.util.Iterator;
 
-public class KthShortestPathTest extends ParentTestClass{
-
-    static enum relType implements RelationshipType {TESTLINK}
+public class KthShortestPathTest extends ParentTestClass {
 
     @Test
     public void testGetAllKthShortestPath() throws Exception {
         Transaction tx = graphDb.beginTx();
-        try{
+        try {
             Node startNode = graphDb.createNode();
             Node midNode = graphDb.createNode();
             Node stopNode = graphDb.createNode();
@@ -23,14 +24,14 @@ public class KthShortestPathTest extends ParentTestClass{
             Iterator<Node> nodes = kthShortestPath.getAllKthShortestPath(startNode, stopNode, 2, 1)
                     .iterator().next().nodes().iterator();
 
-            Assert.assertEquals(nodes.next(), startNode);
-            Assert.assertEquals(nodes.next(), midNode);
-            Assert.assertEquals(nodes.next(), stopNode);
-            Assert.assertEquals(nodes.hasNext(), false);
+            Assert.assertEquals(startNode, nodes.next());
+            Assert.assertEquals(midNode, nodes.next());
+            Assert.assertEquals(stopNode, nodes.next());
+            Assert.assertFalse(nodes.hasNext());
             Iterator<Path> paths = kthShortestPath.getAllKthShortestPath(startNode, stopNode, 1, 1).iterator();
-            Assert.assertEquals(paths.hasNext(), false);
+            Assert.assertFalse(paths.hasNext());
             tx.success();
-        }finally {
+        } finally {
             tx.finish();
         }
     }

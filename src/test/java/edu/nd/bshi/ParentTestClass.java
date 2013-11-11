@@ -3,12 +3,15 @@ package edu.nd.bshi;
 import org.junit.After;
 import org.junit.Before;
 import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 
 public class ParentTestClass {
     static GraphDatabaseService graphDb;
     static NodeFinder nodeFinder;
     static final String TEST_DB_PATH = "./test_db";
+
+    static enum relType implements RelationshipType {TESTLINK}
 
     @Before
     public void setUp() throws Exception {
