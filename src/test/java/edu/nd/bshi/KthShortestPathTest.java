@@ -28,8 +28,8 @@ public class KthShortestPathTest extends ParentTestClass {
             Assert.assertEquals(midNode, nodes.next());
             Assert.assertEquals(stopNode, nodes.next());
             Assert.assertFalse(nodes.hasNext());
-            Iterator<Path> paths = kthShortestPath.getAllKthShortestPath(startNode, stopNode, 1, 1).iterator();
-            Assert.assertFalse(paths.hasNext());
+            Iterator<Path> paths = kthShortestPath.getAllKthShortestPath(startNode, stopNode).iterator();
+            Assert.assertTrue(paths.hasNext());
             tx.success();
         } finally {
             tx.finish();
