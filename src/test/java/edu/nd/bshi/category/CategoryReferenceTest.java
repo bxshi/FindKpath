@@ -1,7 +1,7 @@
 package edu.nd.bshi.category;
 
-import org.junit.Test;
 import org.junit.Assert;
+import org.junit.Test;
 
 public class CategoryReferenceTest {
     @Test
@@ -14,7 +14,7 @@ public class CategoryReferenceTest {
     @Test
     public void testPutAndGetNode() throws Exception {
         CategoryReference categoryReference = CategoryReference.getInstance();
-        CategoryNode categoryNode = new CategoryNode(1,1);
+        CategoryNode categoryNode = new CategoryNode(1, 1);
         Assert.assertTrue(categoryReference.putNode(categoryNode));
         Assert.assertFalse(categoryReference.putNode(categoryNode));
         Assert.assertSame(categoryNode, categoryReference.getNode(1));
