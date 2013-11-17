@@ -13,7 +13,7 @@ import org.neo4j.graphdb.Transaction;
 
 
 public class MetaPathTest extends ParentTestClass {
-    @Ignore
+    @Test
     public void testGetMetaPathWithNoHeightSort() throws Exception {
         MetaPath metaPath = null;
 
