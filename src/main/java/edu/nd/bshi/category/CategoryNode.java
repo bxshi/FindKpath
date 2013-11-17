@@ -15,6 +15,20 @@ public class CategoryNode {
 
     //TODO add another constructor that do not need to assign height
 
+    @Override
+    public String toString() {
+        StringBuilder result = new StringBuilder();
+
+        result.append(" Node:");
+        result.append(this.index);
+        result.append(" Height:");
+        result.append(this.height);
+        result.append(" Parent:");
+        result.append(this.parent.index);
+
+        return result.toString();
+    }
+
     private boolean setParent(CategoryNode father) {
         //Keep the hierarchy is in order
         //Do we need strictly make sure that this.height = father.getHeight()+1
