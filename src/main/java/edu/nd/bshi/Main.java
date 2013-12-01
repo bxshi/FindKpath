@@ -1,20 +1,25 @@
 package edu.nd.bshi;
 
 import edu.nd.bshi.category.Category;
-import edu.nd.bshi.category.CategoryNode;
-import org.apache.logging.log4j.Logger;
-import org.neo4j.graphdb.Path;
-
+import edu.nd.bshi.metapath.MetaPath;
+import edu.nd.bshi.util.DataSaver;
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.sql.*;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.Random;
 
 
 public class Main {
 
     static Logger logger = LogManager.getLogger(Main.class.getName());
-    static Category category = Category.getInstance();
     static Runtime runtime = Runtime.getRuntime();
+    static final Category category = Category.getInstance();
+    static final int TIME_TO_SEC = 1000000;
+    static final int MAX_ID = 39582844;
+    static final DataSaver dataLogger = new DataSaver("result");
 
 
     public static void main(String[] args) {
@@ -22,71 +27,98 @@ public class Main {
         logger.info("-=-=-=-=Step One-=-=-=-=-=");
         logger.info("Constructing Category Tree");
 
-        Connection conn = null;
-        Statement stat = null;
-        ResultSet rs = null;
 
         String url = "jdbc:mysql://dsg1.crc.nd.edu:3306/wikipedia";
         String user = "bshi";
         String passwd = "passwd";
 
-        int[] x = new int[39582845];
-
         long startTime = System.nanoTime();
 
-        try{
-            conn = DriverManager.getConnection(url, user, passwd);
-            stat = conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
-            stat.setFetchSize(Integer.MIN_VALUE);
-            rs = stat.executeQuery("SELECT path FROM wikipedia.pathsFromMainTopicCategories where namespace=14");
-            int i = 0;
-            while(rs.next()) {
-                if(i++ % 50000 == 0) {
-                    logger.info("Processed "+i);
-                }
-                String path = rs.getString(1);
-                String[] pathList = path.split(",");
-                int index = Integer.parseInt(pathList[pathList.length - 1]);
-                int height = pathList.length;
-                int parent = pathList.length>1 ? Integer.parseInt(pathList[pathList.length-2]) : 0;
-                CategoryNode categoryNode = new CategoryNode(index, height);
-                logger.trace(index+" "+parent);
-                category.putNode(categoryNode, parent);
-            }
-        } catch(SQLException e){
-            logger.fatal("MySQL error! "+e.toString());
-            e.printStackTrace();
-        } catch(Exception e){
-            logger.fatal("Construction error! "+e.toString());
-            e.printStackTrace();
-        } finally {
-            try{
-                if(rs!=null)
-                    rs.close();
-                if(stat != null){
-                    stat.close();
-                }
-                if(conn != null){
-                    conn.close();
-                }
-            }catch (SQLException e){
-                logger.fatal("MySQL error! "+e.toString());
-                e.printStackTrace();
-            }
+        if (!Category.loadCategoriesFromMySQL(url, user, passwd)) {
+            logger.fatal("Category tree construct error, process halt.");
+            System.exit(1);
         }
 
         long stopTime = System.nanoTime();
 
-        logger.info("Category tree constructed, cost "+((stopTime-startTime)/1000000)+" seconds");
-        logger.info("Memory Consumption are "+((runtime.totalMemory () - runtime.freeMemory ())/1024) +" KBytes");
+        logger.info("Category tree constructed, cost " + ((stopTime - startTime) / TIME_TO_SEC) + " seconds");
+        logger.info("Memory Consumption are " + ((runtime.totalMemory() - runtime.freeMemory()) / 1024) + " KBytes");
 
-//
-//        KthShortestPath kthShortestPath = new KthShortestPath();
-//        NodeFinder nodeFinder = new NodeFinder();
-//        Iterable<Path> paths = kthShortestPath.getAllKthShortestPath(
-//                nodeFinder.getSingleNodeByIndex("wikipage", "id", 260),
-//                nodeFinder.getSingleNodeByIndex("wikipage", "id", 621169));
-//
-//        System.out.println(paths.toString());
+
+        logger.info("-=-=-=-=Step Two-=-=-=-=-=");
+        logger.info("Compute meta-path between random nodes");
+
+        KthShortestPath kthShortestPath = new KthShortestPath();
+        Connection conn = null;
+        Statement stat = null;
+        ResultSet rs = null;
+        try {
+            conn = DriverManager.getConnection(url, user, passwd);
+            stat = conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+            stat.setFetchSize(Integer.MAX_VALUE);
+
+            //Get two random nodes, try get the relations between them
+            Random random = new Random();
+            int startNodeId;
+            int stopNodeId;
+
+            boolean get = false;
+            while (!get) {
+                startNodeId = random.nextInt(MAX_ID);
+                stopNodeId = random.nextInt(MAX_ID);
+
+                rs = stat.executeQuery("SELECT page_id FROM page where page_id=" + startNodeId);
+                if (!rs.first()) {
+                    logger.warn("Node " + startNodeId + " does not exist, skip it");
+                    continue;
+                }
+
+                rs = stat.executeQuery("SELECT page_id FROM page where page_id=" + stopNodeId);
+                if (!rs.first()) {
+                    logger.warn("Node " + stopNodeId + " does not exist, skip it");
+                    continue;
+                }
+
+                logger.info("Try find path form " + startNodeId + " --> " + stopNodeId);
+
+                //start combine two nodes
+                LinkedList<LinkedList<Integer>> paths = kthShortestPath.getAllKthShortestPath(startNodeId, stopNodeId, 4, "wikipage", "WIKILINK");
+                logger.info("Paths are\n" + paths.toString());
+                if (paths.size() == 0) {
+                    continue;
+                }
+                paths = Category.getPathsCategories(paths, stat);
+                logger.info("converted paths are " + paths.toString());
+                MetaPath metaPath = new MetaPath(paths);
+                LinkedHashSet<LinkedList<Integer>> metapaths = metaPath.getMetaPath();
+                logger.info(metaPath.getMetaPath().toString());
+                dataLogger.write(metaPath.getMetaPath(), startNodeId, stopNodeId);
+                if (metapaths.size() != 0) {
+                    get = true;
+                }
+            }
+
+
+        } catch (SQLException e) {
+            logger.fatal("MySQL error! " + e.toString());
+            e.printStackTrace();
+        } catch (Exception e) {
+            logger.fatal("Construction error! " + e.toString());
+            e.printStackTrace();
+        } finally {
+            try {
+                if (rs != null)
+                    rs.close();
+                if (stat != null) {
+                    stat.close();
+                }
+                if (conn != null) {
+                    conn.close();
+                }
+            } catch (SQLException e) {
+                logger.fatal("MySQL error! " + e.toString());
+                e.printStackTrace();
+            }
+        }
     }
 }
