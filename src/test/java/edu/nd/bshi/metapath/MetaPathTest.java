@@ -5,14 +5,22 @@ import edu.nd.bshi.ParentTestClass;
 import edu.nd.bshi.category.Category;
 import edu.nd.bshi.category.CategoryNode;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.Transaction;
 
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+
 
 public class MetaPathTest extends ParentTestClass {
+
+    static final String url = "jdbc:mysql://dsg1.crc.nd.edu:3306/wikipedia";
+    static final String user = "bshi";
+    static final String passwd = "passwd";
+
     @Test
     public void testGetMetaPathWithNoHeightSort() throws Exception {
         MetaPath metaPath = null;
@@ -57,7 +65,7 @@ public class MetaPathTest extends ParentTestClass {
 
             KthShortestPath kthShortestPath = new KthShortestPath();
 
-            Iterable<Path> kthPaths = kthShortestPath.getAllKthShortestPath(n1, n5, 10, 10);
+            Iterable<Path> kthPaths = kthShortestPath.getAllKthShortestPath(n1, n5, "TESTLINK", 10, 10);
 
             metaPath = new MetaPath(kthPaths);
 
@@ -135,7 +143,7 @@ public class MetaPathTest extends ParentTestClass {
 
             KthShortestPath kthShortestPath = new KthShortestPath();
 
-            Iterable<Path> kthPaths = kthShortestPath.getAllKthShortestPath(nstart, nstop, 10, 10);
+            Iterable<Path> kthPaths = kthShortestPath.getAllKthShortestPath(nstart, nstop, "TESTLINK", 10, 10);
 
             MetaPath metaPath = new MetaPath(kthPaths);
 
@@ -148,4 +156,39 @@ public class MetaPathTest extends ParentTestClass {
 
     }
 
+    @Test
+    public void testGetMetaPath() throws Exception {
+        LinkedList<LinkedList<Integer>> originalPaths = new LinkedList<LinkedList<Integer>>();
+        //this is the category path, so it is normal that we have duplicate path
+        originalPaths.add(new LinkedList<Integer>(Arrays.asList(11737735, 1406863, 32267496, 30397298, 2423005)));
+        originalPaths.add(new LinkedList<Integer>(Arrays.asList(11737735, 30502599, 1648792, 17396277, 2423005)));
+        originalPaths.add(new LinkedList<Integer>(Arrays.asList(11737735, 30502599, 1648792, 17396277, 2423005)));
+        originalPaths.add(new LinkedList<Integer>(Arrays.asList(11737735, 30502599, 1648792, 2525218, 2423005)));
+        originalPaths.add(new LinkedList<Integer>(Arrays.asList(11737735, 30502599, 1648792, 2432183, 2423005)));
+        originalPaths.add(new LinkedList<Integer>(Arrays.asList(11737735, 30502599, 1648792, 30397298, 2423005)));
+        originalPaths.add(new LinkedList<Integer>(Arrays.asList(11737735, 1406863, 715315, 2525218, 2423005)));
+        originalPaths.add(new LinkedList<Integer>(Arrays.asList(11737735, 30502599, 715315, 2525218, 2423005)));
+        originalPaths.add(new LinkedList<Integer>(Arrays.asList(11737735, 30502599, 12636628, 2525218, 2423005)));
+        originalPaths.add(new LinkedList<Integer>(Arrays.asList(11737735, 30502599, 23123610, 30397298, 2423005)));
+        originalPaths.add(new LinkedList<Integer>(Arrays.asList(11737735, 30502599, 9367546, 17396277, 2423005)));
+        originalPaths.add(new LinkedList<Integer>(Arrays.asList(11737735, 1406863, 29425563, 30397298, 2423005)));
+        originalPaths.add(new LinkedList<Integer>(Arrays.asList(11737735, 1406863, 3571949, 30397298, 2423005)));
+        originalPaths.add(new LinkedList<Integer>(Arrays.asList(11737735, 1406863, 6518123, 30397298, 2423005)));
+        originalPaths.add(new LinkedList<Integer>(Arrays.asList(11737735, 30502599, 37403280, 2525218, 2423005)));
+        originalPaths.add(new LinkedList<Integer>(Arrays.asList(11737735, 1406863, 15459174, 30397298, 2423005)));
+        originalPaths.add(new LinkedList<Integer>(Arrays.asList(11737735, 1406863, 1989755, 2525218, 2423005)));
+        originalPaths.add(new LinkedList<Integer>(Arrays.asList(11737735, 30502599, 1989755, 2525218, 2423005)));
+        originalPaths.add(new LinkedList<Integer>(Arrays.asList(11737735, 30502599, 2487779, 30397298, 2423005)));
+
+        Category category = Category.getInstance();
+
+        Category.loadCategoriesFromMySQL(url, user, passwd);
+
+        MetaPath metaPath = new MetaPath(originalPaths);
+        LinkedHashSet<LinkedList<Integer>> paths = metaPath.getMetaPath();
+        Assert.assertEquals(1, paths.size());
+        Assert.assertEquals("[[30502599, 1648792, 2525218]]", paths.toString());
+
+
+    }
 }
