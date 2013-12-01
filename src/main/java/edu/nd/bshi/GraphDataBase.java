@@ -3,6 +3,9 @@ package edu.nd.bshi;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * GraphDataBase Singleton
  */
@@ -10,9 +13,22 @@ public class GraphDataBase {
     private static GraphDataBase instance = null;
     private static GraphDatabaseService graphDb = null;
     private static final String DB_PATH = "./db";
+    private Map<String, String> config;
 
     protected GraphDataBase() {
-        graphDb = new GraphDatabaseFactory().newEmbeddedDatabase(DB_PATH);
+
+        config = new HashMap<String, String>();
+        config.put("read_only", "true");
+        config.put("neostore.nodestore.db.mapped_memory", "120M");
+        config.put("neostore.relationsipstore.db.mapped_memory", "5000M");
+        config.put("neostore.propertystore.db.mapped_memory", "800M");
+        config.put("neostore.propertystore.db.strings.mapped_memory", "800M");
+        config.put("dump_configuration", "true");
+
+        graphDb = new GraphDatabaseFactory()
+                .newEmbeddedDatabaseBuilder(DB_PATH)
+                .setConfig(config)
+                .newGraphDatabase();
         registerShutdownHook(graphDb);
     }
 
