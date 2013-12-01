@@ -14,7 +14,8 @@ import java.util.*;
 public class MetaPath {
 
     static final Logger logger = LogManager.getLogger(MetaPath.class.getName());
-
+    boolean checked = false;
+    int startNode, stopNode;
 
     //original paths, each tuple contains the nodes in that path
     // **DOES NOT CONTAIN THE START/DESTINATION POINT**
@@ -69,12 +70,64 @@ public class MetaPath {
 
     private int mostFrequentLength = 0;
 
+    public MetaPath(LinkedList<LinkedList<Integer>> paths) {
+        HashMap<Integer, Integer> lengthCount = new HashMap<Integer, Integer>();
+
+        startNode = paths.getFirst().getFirst();
+        stopNode = paths.getFirst().getLast();
+        logger.trace("Construct new meta category path, " + startNode + "-->" + stopNode);
+
+        for (LinkedList<Integer> path : paths) {
+            path.removeFirst();
+            path.removeLast();
+        }
+
+        for (LinkedList<Integer> path : paths) {
+            if (!lengthCount.containsKey(path.size())) {
+                lengthCount.put(path.size(), 0);
+            }
+            lengthCount.put(path.size(), lengthCount.get(path.size()) + 1);
+            if (mostFrequentLength < lengthCount.get(path.size())) {
+                mostFrequentLength = path.size();
+            }
+        }
+
+        for (int i = 0; i < mostFrequentLength; i++) {
+            nodePathList.add(new LinkedList<Integer>());
+        }
+
+        for (LinkedList<Integer> path : paths) {
+            if (path.size() == mostFrequentLength) {
+                pathList.add(new LinkedList<Integer>());
+                int nodePosIndex = 0;
+                for (Integer node : path) {
+                    //WARN get the lowest-level category index instead of the actual node index,
+                    // otherwise this WON'T work
+                    pathList.getLast().add(node);
+                    nodePathList.get(nodePosIndex++).add(node);
+                }
+            }
+        }
+
+        //initialize cluster container
+        for (int i = 0; i < mostFrequentLength; i++) {
+            this.clusterPathList.add(new LinkedHashSet<Integer>());
+        }
+
+        logger.trace("Most frequent path length without start/stop is " + mostFrequentLength);
+        logger.trace("Original paths are " + pathList.toString());
+        logger.trace("Paths divided by position are " + nodePathList.toString());
+
+    }
+
     /**
      * Instantiates a new Meta path.
      *
      * @param kthAllPaths the kth all paths
      */
     public MetaPath(Iterable<Path> kthAllPaths) {
+
+        //TODO add check if the length is 0 (direct connected)
 
         HashMap<Integer, Integer> lengthCount = new HashMap<Integer, Integer>();
         //TODO extract start and destination nodes out of the list
@@ -160,36 +213,39 @@ public class MetaPath {
     private boolean mergeNodes(HashMap<Integer, Set<Integer>> nodeHeightMap,
                                LinkedHashSet<Integer> clusterSet,
                                LinkedList<Integer> nodePath) {
-        ReverseArrayIterator<Integer> it = Category.getSortedHeightIterator(nodeHeightMap);
-        boolean merged = false;
-        while (it.hasNext()) {
-            int index = it.next();
-            logger.trace("height " + index);
-            merged = false;
-            if (nodeHeightMap.get(index).size() != 0) {
-                for (int node : nodeHeightMap.get(index)) {
-                    CategoryNode parent = Category.getNode(node).getParent();
-                    logger.trace("Node information " + Category.getNode(node).toString());
-                    if (nodeHeightMap.get(parent.getHeight()) == null) {
-                        nodeHeightMap.put(parent.getHeight(), new HashSet<Integer>());
-                    }
-                    if (nodeHeightMap.get(parent.getHeight()).contains(parent.getIndex())) {
-                        merged = true;
-                        //add into cluster
-                        putNodeIntoCluster(node, parent, clusterSet, nodePath);
-                    } else {
-                        nodeHeightMap.get(parent.getHeight()).add(parent.getIndex());
-                    }
-                }
-                nodeHeightMap.remove(index);
-                if (merged) {
+
+        while (true) {
+            ReverseArrayIterator<Integer> it = Category.getSortedHeightIterator(nodeHeightMap);
+            boolean merged = false;
+            while (it.hasNext()) {
+                int index = it.next();
+                logger.trace("height " + index);
+                merged = false;
+                if (index <= 1) {   // there is no chance to merge
                     return merged;
+                }
+                if (nodeHeightMap.get(index).size() != 0) {
+                    for (int node : nodeHeightMap.get(index)) {
+                        CategoryNode parent = Category.getNode(node).getParent();
+                        logger.trace("Node information " + Category.getNode(node).toString());
+                        if (nodeHeightMap.get(parent.getHeight()) == null) {
+                            nodeHeightMap.put(parent.getHeight(), new HashSet<Integer>());
+                        }
+                        if (nodeHeightMap.get(parent.getHeight()).contains(parent.getIndex())) {
+                            merged = true;
+                            //add into cluster
+                            putNodeIntoCluster(node, parent, clusterSet, nodePath);
+                        } else {
+                            nodeHeightMap.get(parent.getHeight()).add(parent.getIndex());
+                        }
+                    }
+                    nodeHeightMap.remove(index);
+                    if (merged) {
+                        return merged;
+                    }
                 }
             }
         }
-
-        return merged;
-
     }
 
     private static void putNodeIntoCluster(int child, CategoryNode parent, LinkedHashSet<Integer> clusterSet,
@@ -217,7 +273,7 @@ public class MetaPath {
             }
         }
 
-        logger.trace("putNodeIntoCluster, cluster is " + clusterSet.toString());
+        logger.trace("put new node into cluster, updated cluster is " + clusterSet.toString());
 
     }
 
@@ -245,9 +301,27 @@ public class MetaPath {
         return found;
     }
 
-    private void calcMetaPath() {
-        boolean duplicatedNodes = false;
+    private LinkedList<Integer> getLowestCategoryPath() {
+        LinkedList<Integer> lowestCategoryPath = null;
+        int totalDepth = 0;
+        for (LinkedList<Integer> path : this.metaPathList) {
+            int depth = 0;
+            for (int node : path) {
+                depth += Category.getNode(node).getHeight();
+            }
+            logger.trace("Path " + path.toString() + " total Depth=" + depth);
+            lowestCategoryPath = totalDepth < depth ? path : lowestCategoryPath;
+            totalDepth = totalDepth < depth ? depth : totalDepth;
+        }
+        return lowestCategoryPath;
+    }
 
+    private void calcMetaPath() {
+
+        boolean duplicatedNodes = false;
+        checked = true;
+
+        //merge nodes at same position before doing a category based merge
         for (int i = 0; i < mostFrequentLength; i++) {
             if (mergeNodesBeforeHeightSort(this.nodePathList.get(i), this.clusterPathList.get(i))) {
                 duplicatedNodes = true;
@@ -265,23 +339,30 @@ public class MetaPath {
         //sort all nodes by their height
         for (LinkedList<Integer> nodeList : nodePathList) {
             this.nodePathHeightList.add(sortByHeight(nodeList));
+            if (this.nodePathHeightList.getLast().size() == 0)
+                return;
         }
+
 
         logger.trace("Sorted nodes " + nodePathHeightList.toString());
 
         while (true) {
             int count = 0;
-            logger.trace("round");
             for (int i = 0; i < this.nodePathHeightList.size(); i++) {
-
-                if (mergeNodes(this.nodePathHeightList.get(i), this.clusterPathList.get(i), this.nodePathList.get(i)) &&
-                        this.allClusterNotEmpty()) {
-                    if (findMetaPathByCluster()) {
+                if (mergeNodes(this.nodePathHeightList.get(i), this.clusterPathList.get(i), this.nodePathList.get(i))) {
+                    //merged
+                    if (this.allClusterIsNotEmpty()) {
+                        //all position in the path have merged nodes
+                        if (findMetaPathByCluster()) {
+                            return;
+                        }
+                    }
+                } else {
+                    //not merged
+                    if (checkClusterIsEmpty(i)) {
+                        //do not have merged point, then there is no common-meta path
                         return;
                     }
-                }
-                if (++count == this.nodePathHeightList.size()) {
-                    return;
                 }
             }
         }
@@ -289,13 +370,17 @@ public class MetaPath {
 
     }
 
-    private boolean allClusterNotEmpty() {
+    private boolean allClusterIsNotEmpty() {
         for (LinkedHashSet<Integer> linkedHashSet : this.clusterPathList) {
             if (linkedHashSet.size() == 0) {
                 return false;
             }
         }
         return true;
+    }
+
+    private boolean checkClusterIsEmpty(int index) {
+        return this.clusterPathList.get(index).size() == 0;
     }
 
 
@@ -305,11 +390,16 @@ public class MetaPath {
      * @return the linked hash set
      */
     public LinkedHashSet<LinkedList<Integer>> getMetaPath() {
-        logger.error("metaPathList " + this.metaPathList.size());
 
         //TODO change to generate multiple meta paths (the interface does not need to be changed)
-        if (this.metaPathList.size() == 0) {
+        if (!this.checked) {
             calcMetaPath();
+        }
+
+        if (this.metaPathList.size() > 1) {
+            LinkedHashSet<LinkedList<Integer>> singlePathList = new LinkedHashSet<LinkedList<Integer>>();
+            singlePathList.add(this.getLowestCategoryPath());
+            return singlePathList;
         }
         return this.metaPathList;
     }
