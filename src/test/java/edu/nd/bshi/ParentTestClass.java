@@ -11,7 +11,7 @@ public class ParentTestClass {
     protected static NodeFinder nodeFinder;
     protected static final String TEST_DB_PATH = "./test_db";
 
-    protected static enum relType implements RelationshipType {TESTLINK}
+    protected static enum relType implements RelationshipType {TESTLINK, ABC}
 
     @Before
     public void setUp() throws Exception {

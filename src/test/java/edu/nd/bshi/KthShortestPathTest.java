@@ -21,7 +21,7 @@ public class KthShortestPathTest extends ParentTestClass {
             midNode.createRelationshipTo(stopNode, relType.TESTLINK);
             KthShortestPath kthShortestPath = new KthShortestPath();
 
-            Iterator<Node> nodes = kthShortestPath.getAllKthShortestPath(startNode, stopNode, 2, 1)
+            Iterator<Node> nodes = kthShortestPath.getAllKthShortestPath(startNode, stopNode, "TESTLINK", 2, 1)
                     .iterator().next().nodes().iterator();
 
             Assert.assertEquals(startNode, nodes.next());
@@ -29,7 +29,7 @@ public class KthShortestPathTest extends ParentTestClass {
             Assert.assertEquals(stopNode, nodes.next());
             Assert.assertFalse(nodes.hasNext());
             Iterator<Path> paths = kthShortestPath.getAllKthShortestPath(startNode, stopNode).iterator();
-            Assert.assertTrue(paths.hasNext());
+            Assert.assertFalse(paths.hasNext());
             tx.success();
         } finally {
             tx.finish();
